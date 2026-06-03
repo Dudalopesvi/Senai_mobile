@@ -1,55 +1,60 @@
-import { View, Text, Image, StyleSheet, Dimensions } from 'react-native';
+import { useEffect, useState } from 'react';
+import { ActivityIndicator, Image, StyleSheet, Text, View } from 'react-native';
 
-type Props = {
-  clima: number;
+const imagensClima: Record<number, { uri: string }> = {
+  0: { uri: 'https://cdn-icons-png.flaticon.com/512/869/869869.png' },
+  1: { uri: 'https://cdn-icons-png.flaticon.com/512/414/414927.png' },
+  2: { uri: 'https://cdn-icons-png.flaticon.com/512/1163/1163624.png' },
+  3: { uri: 'https://cdn-icons-png.flaticon.com/512/414/414825.png' },
 };
 
-const { width, height } = Dimensions.get('window');
+export default function Clima() {
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
-export default function Clima({ clima }: Props) {
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await fetch(
+          'https://api.open-meteo.com/v1/forecast?latitude=-27.597&longitude=-48.5494&current=temperature_2m,weather_code'
+        );
+        const json = await response.json();
+        setData(json);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  if (loading) return <ActivityIndicator />;
+
+  const weatherCode: number = data?.current?.weather_code ?? 0;
+  const imagem = imagensClima[weatherCode] ?? imagensClima[0];
+
   return (
     <View style={styles.container}>
-      <Text style={styles.texto}>Clima atual</Text>
-
-      <Image
-        source={{
-          uri:
-            clima === 0
-              ? 'https://openweathermap.org/img/wn/01d@4x.png'
-              : clima === 1
-              ? 'https://openweathermap.org/img/wn/02d@4x.png'
-              : clima === 2
-              ? 'https://openweathermap.org/img/wn/03d@4x.png'
-              : 'https://openweathermap.org/img/wn/04d@4x.png',
-        }}
-        style={styles.imagem}
-        resizeMode="contain"
-        fadeDuration={0}
-      />
+      <Image style={styles.icone} source={imagem} />
+      <Text style={styles.temperatura}>{Math.ceil(data?.current?.temperature_2m)}º</Text>
+      <Text>{weatherCode}</Text>
+      <Text>Florianópolis, SC</Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    width: '100%',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#fff',
-    paddingVertical: 4,
   },
-
-  texto: {
-    fontSize: 14,
-    color: '#000',
-    fontWeight: '600',
-    marginBottom: 10,
-    
+  icone: {
+    width: 64,
+    height: 64,
   },
-
-  imagem: {
-    width: width * 0.75,
-    height: height * 0.28,
-    marginTop: 20,
+  temperatura: {
+    fontSize: 52,
   },
 });
