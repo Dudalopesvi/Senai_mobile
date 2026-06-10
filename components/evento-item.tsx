@@ -66,10 +66,6 @@ const styles = StyleSheet.create({
     gap: 8,
     alignItems: 'center'
   },
-  imagem: {
-    width: 500,
-    height: 200,
-  },
   icone: {
     flexDirection: 'row',
     gap: 8,
