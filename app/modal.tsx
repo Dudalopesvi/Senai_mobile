@@ -1,3 +1,5 @@
+import dayjs from "dayjs";
+import customParseFormat from "dayjs/plugin/customParseFormat";
 import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
@@ -10,116 +12,155 @@ import {
   View,
 } from "react-native";
 
+dayjs.extend(customParseFormat);
+
 export default function ModalScreen() {
   const router = useRouter();
 
   const [titulo, setTitulo] = useState("");
+  const [tituloErro, setTituloErro] = useState("");
+
   const [descricao, setDescricao] = useState("");
+  const [descricaoErro, setDescricaoErro] = useState("");
+
   const [local, setLocal] = useState("");
+  const [localErro, setLocalErro] = useState("");
+
   const [data, setData] = useState("");
+  const [dataErro, setDataErro] = useState("");
+
   const [valor, setValor] = useState("");
+  const [valorErro, setValorErro] = useState("");
+
+  const isValid = () => {
+    var isErro = false;
+
+    if (titulo.length < 3 || titulo.length > 256) {
+      setTituloErro("Título deve ter entre 3 e 256 caracteres.");
+      isErro = true;
+    }
+
+    if (descricao.length < 3 || descricao.length > 256) {
+      setDescricaoErro("Descrição deve ter entre 3 e 256 caracteres.");
+      isErro = true;
+    }
+
+    if (local.length < 3 || local.length > 256) {
+      setLocalErro("Local deve ter entre 3 e 256 caracteres.");
+      isErro = true;
+    }
+
+    const dataEvento = dayjs(data, "YYYY-MM-DD", true);
+    const hoje = dayjs().startOf("day");
+    const dataMaxima = dayjs().add(1, "year");
+
+    if (!dataEvento.isValid()) {
+      setDataErro("Data inválida. Use o formato AAAA-MM-DD.");
+      isErro = true;
+    } else if (dataEvento.isBefore(hoje) || dataEvento.isSame(hoje)) {
+      setDataErro("A data deve ser maior que a data atual.");
+      isErro = true;
+    } else if (dataEvento.isAfter(dataMaxima)) {
+      setDataErro(
+        `A data deve ser menor que ${dataMaxima.format("DD/MM/YYYY")}.`
+      );
+      isErro = true;
+    }
+
+    const valorNum = Number(valor.replace(",", "."));
+    if (isNaN(valorNum) || valorNum < 1 || valorNum > 1000) {
+      setValorErro("Valor deve ser entre R$ 1,00 e R$ 1.000,00.");
+      isErro = true;
+    }
+
+    return isErro;
+  };
+
+  const clear = () => {
+    setTituloErro("");
+    setDescricaoErro("");
+    setLocalErro("");
+    setDataErro("");
+    setValorErro("");
+  };
 
   const onCancel = () => {
     router.back();
   };
 
   const onSubmit = () => {
-    // Validação Título
-    if (titulo.length < 3 || titulo.length > 256) {
-      Alert.alert("Erro", "Título deve ter entre 3 e 256 caracteres.");
-      return;
-    }
+    clear();
 
-    // Validação Descrição
-    if (descricao.length < 3 || descricao.length > 256) {
-      Alert.alert("Erro", "Descrição deve ter entre 3 e 256 caracteres.");
-      return;
+    if (!isValid()) {
+      Alert.alert("Sucesso", "Evento criado com sucesso!");
+      router.back();
     }
-
-    // Validação Local
-    if (local.length < 3 || local.length > 256) {
-      Alert.alert("Erro", "Local deve ter entre 3 e 256 caracteres.");
-      return;
-    }
-
-    // Validação Data (maior que hoje e menor que 1 ano)
-    const dataEvento = new Date(data);
-    const hoje = new Date();
-    hoje.setHours(0, 0, 0, 0);
-    const umAno = new Date();
-    umAno.setFullYear(umAno.getFullYear() + 1);
-
-    if (isNaN(dataEvento.getTime())) {
-      Alert.alert("Erro", "Data inválida. Use o formato AAAA-MM-DD.");
-      return;
-    }
-    if (dataEvento <= hoje) {
-      Alert.alert("Erro", "A data deve ser maior que a data atual.");
-      return;
-    }
-    if (dataEvento > umAno) {
-      Alert.alert("Erro", "A data deve ser menor que 1 ano a partir de hoje.");
-      return;
-    }
-
-    // Validação Valor
-    const valorNum = parseFloat(valor.replace(",", "."));
-    if (isNaN(valorNum) || valorNum < 1 || valorNum > 1000) {
-      Alert.alert("Erro", "Valor deve ser entre R$ 1,00 e R$ 1.000,00.");
-      return;
-    }
-
-    Alert.alert("Sucesso", "Evento criado com sucesso!");
-    router.back();
   };
 
   return (
     <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
 
-      <Text style={styles.label}>Título</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Digite o título do evento"
-        value={titulo}
-        onChangeText={setTitulo}
-        maxLength={256}
-      />
+      <Text style={styles.formularioRotulo}>Cadastrar novo evento</Text>
 
-      <Text style={styles.label}>Descrição</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Informe a descrição"
-        value={descricao}
-        onChangeText={setDescricao}
-        maxLength={256}
-      />
+      <View style={styles.campoContainer}>
+        <Text style={styles.campoRotulo}>Qual o título do evento?</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Ex: Pesca da Tainha"
+          value={titulo}
+          onChangeText={setTitulo}
+          maxLength={256}
+        />
+        <Text style={styles.campoErro}>{tituloErro}</Text>
+      </View>
 
-      <Text style={styles.label}>Local</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Informe o local"
-        value={local}
-        onChangeText={setLocal}
-        maxLength={256}
-      />
+      <View style={styles.campoContainer}>
+        <Text style={styles.campoRotulo}>Qual a descrição do evento?</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Informe a descrição"
+          value={descricao}
+          onChangeText={setDescricao}
+          maxLength={256}
+        />
+        <Text style={styles.campoErro}>{descricaoErro}</Text>
+      </View>
 
-      <Text style={styles.label}>Data</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="AAAA-MM-DD"
-        value={data}
-        onChangeText={setData}
-        keyboardType="numeric"
-      />
+      <View style={styles.campoContainer}>
+        <Text style={styles.campoRotulo}>Qual a data do evento?</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="AAAA-MM-DD"
+          value={data}
+          onChangeText={setData}
+          keyboardType="numeric"
+        />
+        <Text style={styles.campoErro}>{dataErro}</Text>
+      </View>
 
-      <Text style={styles.label}>Valor</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Informe o valor"
-        value={valor}
-        onChangeText={setValor}
-        keyboardType="numeric"
-      />
+      <View style={styles.campoContainer}>
+        <Text style={styles.campoRotulo}>Qual o local do evento?</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Informe o local"
+          value={local}
+          onChangeText={setLocal}
+          maxLength={256}
+        />
+        <Text style={styles.campoErro}>{localErro}</Text>
+      </View>
+
+      <View style={styles.campoContainer}>
+        <Text style={styles.campoRotulo}>Qual o valor do ingresso?</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Informe o valor"
+          value={valor}
+          onChangeText={setValor}
+          keyboardType="numeric"
+        />
+        <Text style={styles.campoErro}>{valorErro}</Text>
+      </View>
 
       <View style={styles.botoes}>
         <TouchableOpacity style={styles.botaoCancelar} onPress={onCancel}>
@@ -141,12 +182,24 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     flexGrow: 1,
   },
-  label: {
+  formularioRotulo: {
+    fontSize: 16,
+    fontWeight: "600",
+    marginBottom: 8,
+  },
+  campoContainer: {
+    paddingVertical: 8,
+  },
+  campoRotulo: {
     fontSize: 14,
     fontWeight: "600",
-    marginTop: 12,
     marginBottom: 4,
     color: "#333",
+  },
+  campoErro: {
+    fontSize: 12,
+    color: "red",
+    marginTop: 2,
   },
   input: {
     borderWidth: 1,
