@@ -11,6 +11,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { criarEvento } from "../services/api-service";
 
 dayjs.extend(customParseFormat);
 
@@ -88,12 +89,21 @@ export default function ModalScreen() {
     router.back();
   };
 
-  const onSubmit = () => {
+  const onSubmit = async () => {
     clear();
 
-    if (!isValid()) {
+    if (isValid()) {
+      return;
+    }
+
+    try {
+      await criarEvento({ titulo, descricao, local, data, valor });
+
       Alert.alert("Sucesso", "Evento criado com sucesso!");
       router.back();
+    } catch (err) {
+      console.log(err);
+      Alert.alert("Erro", `Erro ao criar evento: ${err}`);
     }
   };
 
