@@ -11,6 +11,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { criarEvento } from "../services/api-service";
 
 dayjs.extend(customParseFormat);
 
@@ -32,8 +33,8 @@ export default function ModalScreen() {
   const [valor, setValor] = useState("");
   const [valorErro, setValorErro] = useState("");
 
-  const isValid = () => {
-    var isErro = false;
+  const temErros = () => {
+    let isErro = false;
 
     if (titulo.length < 3 || titulo.length > 256) {
       setTituloErro("Título deve ter entre 3 e 256 caracteres.");
@@ -88,12 +89,36 @@ export default function ModalScreen() {
     router.back();
   };
 
-  const onSubmit = () => {
+  const onSubmit = async () => {
     clear();
 
-    if (!isValid()) {
+    if (temErros()) {
+      return;
+    }
+
+    const valorNum = Number(valor.replace(",", "."));
+    const dataISO = dayjs(data, "YYYY-MM-DD", true).toISOString();
+
+    const payload = {
+      titulo,
+      descricao,
+      local,
+      data: dataISO,
+      valor: valorNum,
+    };
+    console.log("Payload enviado:", JSON.stringify(payload));
+
+    try {
+      await criarEvento(payload);
+      
       Alert.alert("Sucesso", "Evento criado com sucesso!");
       router.back();
+    } catch (err: any) {
+      const detalhes = err?.response?.data
+        ? JSON.stringify(err.response.data)
+        : err?.message ?? String(err);
+      console.log("Erro ao criar evento:", err?.response?.status, detalhes);
+      Alert.alert("Erro", `Erro ao criar evento: ${detalhes}`);
     }
   };
 
@@ -237,4 +262,4 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontWeight: "600",
   },
-});
+}); 

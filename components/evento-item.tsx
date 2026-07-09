@@ -2,6 +2,18 @@ import { Calendar, MapPin, Ticket } from 'lucide-react-native';
 import React, { useState } from 'react';
 import { Alert, Button, Image, StyleSheet, Text, View } from 'react-native';
 
+const QUANTIDADE_MINIMA = 1;
+const QUANTIDADE_MAXIMA = 10;
+
+interface EventoItemProps {
+  titulo: string;
+  descricao: string;
+  imagem: string;
+  data: string;
+  local: string;
+  valor: number;
+}
+
 export default function EventoItem({
   titulo,
   descricao,
@@ -9,8 +21,19 @@ export default function EventoItem({
   data,
   local,
   valor
-}) {
-  const [quantidade, setQuantidade] = useState(1);
+}: EventoItemProps) {
+  const [quantidade, setQuantidade] = useState(QUANTIDADE_MINIMA);
+
+  const aumentar = () => {
+    setQuantidade((atual) => Math.min(atual + 1, QUANTIDADE_MAXIMA));
+  };
+
+  const diminuir = () => {
+    setQuantidade((atual) => Math.max(atual - 1, QUANTIDADE_MINIMA));
+  };
+
+  const formatarValor = (v: number) =>
+    v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
   return (
     <View style={styles.container}>
@@ -28,19 +51,32 @@ export default function EventoItem({
         </View>
         <View style={styles.icone}>
           <Ticket size={14} color="gray" />
-          <Text style={styles.texto}>${valor}</Text>
+          <Text style={styles.texto}>{formatarValor(valor)}</Text>
         </View>
       </View>
       <View style={styles.reserva}>
         <View style={styles.contador}>
-          <Button title="+" onPress={() => setQuantidade(quantidade + 1)} />
+          <Button
+            title="-"
+            onPress={diminuir}
+            disabled={quantidade <= QUANTIDADE_MINIMA}
+          />
           <Text style={styles.quantidade}>{quantidade}</Text>
-          <Button title="-" onPress={() => setQuantidade(quantidade - 1)} />
+          <Button
+            title="+"
+            onPress={aumentar}
+            disabled={quantidade >= QUANTIDADE_MAXIMA}
+          />
         </View>
         <View>
           <Button
             title="reservar"
-            onPress={() => Alert.alert('Reservar efetuada com sucesso')}
+            onPress={() =>
+              Alert.alert(
+                'Reserva efetuada',
+                `${quantidade} ingresso(s) para "${titulo}" reservado(s) com sucesso.`
+              )
+            }
           />
         </View>
       </View>
