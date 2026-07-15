@@ -36,27 +36,28 @@ export default function ModalScreen() {
   const temErros = () => {
     let isErro = false;
 
-    if (titulo.length < 3 || titulo.length > 256) {
-      setTituloErro("Título deve ter entre 3 e 256 caracteres.");
+    if (titulo.length < 3 || titulo.length > 64) {
+      setTituloErro("Título deve ter entre 3 e 64 caracteres.");
       isErro = true;
     }
 
-    if (descricao.length < 3 || descricao.length > 256) {
-      setDescricaoErro("Descrição deve ter entre 3 e 256 caracteres.");
+    if (descricao.length < 3 || descricao.length > 64) {
+      setDescricaoErro("Descrição deve ter entre 3 e 64 caracteres.");
       isErro = true;
     }
 
-    if (local.length < 3 || local.length > 256) {
-      setLocalErro("Local deve ter entre 3 e 256 caracteres.");
+    if (local.length < 3 || local.length > 64) {
+      setLocalErro("Local deve ter entre 3 e 64 caracteres.");
       isErro = true;
     }
 
-    const dataEvento = dayjs(data, "YYYY-MM-DD", true);
+    // A API espera a data no formato DD/MM/AAAA (igual ao exemplo do professor).
+    const dataEvento = dayjs(data, "DD/MM/YYYY", true);
     const hoje = dayjs().startOf("day");
     const dataMaxima = dayjs().add(1, "year");
 
     if (!dataEvento.isValid()) {
-      setDataErro("Data inválida. Use o formato AAAA-MM-DD.");
+      setDataErro("Data inválida. Use o formato DD/MM/AAAA.");
       isErro = true;
     } else if (dataEvento.isBefore(hoje) || dataEvento.isSame(hoje)) {
       setDataErro("A data deve ser maior que a data atual.");
@@ -97,20 +98,21 @@ export default function ModalScreen() {
     }
 
     const valorNum = Number(valor.replace(",", "."));
-    const dataISO = dayjs(data, "YYYY-MM-DD", true).toISOString();
 
+    // Envia a data exatamente no formato que o usuário digitou (DD/MM/AAAA),
+    // sem converter para ISO — é o formato que a API espera.
     const payload = {
       titulo,
       descricao,
       local,
-      data: dataISO,
+      data,
       valor: valorNum,
     };
     console.log("Payload enviado:", JSON.stringify(payload));
 
     try {
       await criarEvento(payload);
-      
+
       Alert.alert("Sucesso", "Evento criado com sucesso!");
       router.back();
     } catch (err: any) {
@@ -134,7 +136,7 @@ export default function ModalScreen() {
           placeholder="Ex: Pesca da Tainha"
           value={titulo}
           onChangeText={setTitulo}
-          maxLength={256}
+          maxLength={64}
         />
         <Text style={styles.campoErro}>{tituloErro}</Text>
       </View>
@@ -146,7 +148,7 @@ export default function ModalScreen() {
           placeholder="Informe a descrição"
           value={descricao}
           onChangeText={setDescricao}
-          maxLength={256}
+          maxLength={64}
         />
         <Text style={styles.campoErro}>{descricaoErro}</Text>
       </View>
@@ -155,10 +157,11 @@ export default function ModalScreen() {
         <Text style={styles.campoRotulo}>Qual a data do evento?</Text>
         <TextInput
           style={styles.input}
-          placeholder="AAAA-MM-DD"
+          placeholder="DD/MM/AAAA"
           value={data}
           onChangeText={setData}
-          keyboardType="numeric"
+          keyboardType="numbers-and-punctuation"
+          maxLength={10}
         />
         <Text style={styles.campoErro}>{dataErro}</Text>
       </View>
@@ -170,7 +173,7 @@ export default function ModalScreen() {
           placeholder="Informe o local"
           value={local}
           onChangeText={setLocal}
-          maxLength={256}
+          maxLength={64}
         />
         <Text style={styles.campoErro}>{localErro}</Text>
       </View>
@@ -262,4 +265,4 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontWeight: "600",
   },
-}); 
+});
